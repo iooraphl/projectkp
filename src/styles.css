@@ -110,6 +110,32 @@ a {
   color: var(--primary);
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-auth-link,
+.nav-auth-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 13px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.nav-auth-link {
+  color: var(--text);
+  background: color-mix(in srgb, var(--card) 72%, transparent);
+}
+
+.nav-auth-btn {
+  color: #201205;
+  background: var(--primary);
+  cursor: pointer;
+}
+
 .nav-icon-btn {
   border: 1px solid var(--border);
   color: var(--text);
@@ -717,6 +743,11 @@ footer {
     width: 100%;
     justify-content: space-between;
     gap: 10px;
+  }
+
+  .nav-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .hero-text h1 {

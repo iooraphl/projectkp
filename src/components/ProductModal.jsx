@@ -19,7 +19,11 @@ export default function ProductModal({ product, onClose, onConsultProduct, forma
 
         <div className="modal-grid">
           <div className="modal-media">
-            <img src={product.image} alt={product.name} loading="lazy" />
+            <img
+              src={product.imageUrl || product.image || "/images/product-placeholder.svg"}
+              alt={product.name}
+              loading="lazy"
+            />
           </div>
 
           <div className="modal-info">

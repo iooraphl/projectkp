@@ -1,0 +1,115 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum OrderStatus {
+  UNPAID
+  COD
+  WAITING_CONFIRMATION
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  TRANSFER_BANK
+  COD
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  address       String?
+  role          UserRole  @default(USER)
+  orders        Order[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  brand         String
+  category      String
+  description   String?
+  price         Int
+  size          String?
+  width         String?
+  profile       String?
+  rim           String?
+  loadIndex     String?
+  speedRating   String?
+  vehicleType   String?
+  compatibleCars String?
+  character     String?
+  condition     String?
+  yearProduction String?
+  warranty      String?
+  image         String?
+  stock         String    @default("Ready")
+  badge         String?
+  note          String?
+  items         OrderItem[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([name])
+  @@index([category])
+  @@index([rim])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  orderId         String      @unique
+  refCode         String      @unique
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          OrderStatus @default(UNPAID)
+  paymentMethod   PaymentMethod
+  methodLabel     String
+  amount          Int
+  subtotal        Int
+  serviceFee      Int
+  paymentFee      Int
+  grandTotal      Int
+  bankInfo        Json?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  paidAt          DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        Int       @id @default(autoincrement())
+  orderId   Int
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  name      String
+  size      String?
+  qty       Int
+  price     Int
+
+  @@index([orderId])
+  @@index([productId])
+}

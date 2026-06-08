@@ -8,7 +8,9 @@ export default function ProductSection({
   products,
   onSelectProduct,
   onConsultProduct,
-  formatIDR
+  formatIDR,
+  loading = false,
+  error = ""
 }) {
   return (
     <section id="katalog" className="section catalog-section">
@@ -48,7 +50,11 @@ export default function ProductSection({
         </div>
       </div>
 
-      {products.length === 0 ? (
+      {loading ? (
+        <div className="empty-state">Memuat produk...</div>
+      ) : error ? (
+        <div className="empty-state">{error}</div>
+      ) : products.length === 0 ? (
         <div className="empty-state">Produk tidak ditemukan. Coba ukuran atau tipe kendaraan lain.</div>
       ) : (
         <div className="product-grid">
@@ -56,7 +62,12 @@ export default function ProductSection({
             <article className="product-card" key={product.id}>
               <span className="card-badge">{product.badge}</span>
               <div className="product-media">
-                <img className="product-thumb" src={product.image} alt={product.name} loading="lazy" />
+                <img
+                  className="product-thumb"
+                  src={product.imageUrl || product.image || "/images/product-placeholder.svg"}
+                  alt={product.name}
+                  loading="lazy"
+                />
               </div>
               <div className="product-info">
                 <span className="product-cat">{product.category}</span>

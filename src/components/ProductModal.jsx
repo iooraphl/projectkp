@@ -1,3 +1,5 @@
+"use client";
+
 function SpecRow({ label, value }) {
   return (
     <div className="spec-row">

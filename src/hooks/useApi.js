@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "../contexts/AuthContext";
 
 /**
@@ -6,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
  */
 export const useApi = () => {
   const { token, logout } = useAuth();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:4000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
   const readJson = async (response) => {
     const text = await response.text();
@@ -44,7 +46,7 @@ export const useApi = () => {
       return { success: true, data };
     } catch (error) {
       if (error instanceof TypeError) {
-        return { error: "Tidak bisa terhubung ke server API. Pastikan backend berjalan di http://127.0.0.1:4000." };
+        return { error: "Tidak bisa terhubung ke server API. Pastikan aplikasi Next.js berjalan." };
       }
 
       return { error: error.message || "Network error" };

@@ -1,3 +1,5 @@
+"use client";
+
 export function ServicesSection({ services }) {
   return (
     <section id="layanan" className="section">

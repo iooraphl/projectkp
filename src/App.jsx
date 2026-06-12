@@ -1,23 +1,21 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import AdminDashboard from "./components/AdminDashboard";
 import Header from "./components/Header";
 import HeroSection from "./components/HeroSection";
-import Login from "./components/Login";
 import { ContactSection, PromoSection, ServicesSection } from "./components/MarketingSections";
 import ProductModal from "./components/ProductModal";
 import ProductSection from "./components/ProductSection";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Register from "./components/Register";
-import UserProfile from "./components/UserProfile";
 import { categories, promos, rimOptions, services, whatsappNumber } from "./constants/storeData";
-import { useAuth } from "./contexts/AuthContext";
 import { formatIDR } from "./utils/format";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
 export default function App() {
-  const { isAuthenticated } = useAuth();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:4000";
-  const [theme, setTheme] = useState(() => localStorage.getItem("tire-catalog-theme") || "night");
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "night";
+    return window.localStorage.getItem("tire-catalog-theme") || "night";
+  });
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [activeRim, setActiveRim] = useState("Semua Ring");
   const [search, setSearch] = useState("");
@@ -28,7 +26,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("tire-catalog-theme", theme);
+    window.localStorage.setItem("tire-catalog-theme", theme);
   }, [theme]);
 
   const normalizeProduct = (product) => ({
@@ -52,7 +50,7 @@ export default function App() {
     } catch (error) {
       setProductError(
         error instanceof TypeError
-          ? "Tidak bisa memuat produk. Pastikan backend berjalan."
+          ? "Tidak bisa memuat produk. Pastikan aplikasi Next.js berjalan."
           : error.message || "Gagal memuat produk"
       );
     } finally {
@@ -101,9 +99,12 @@ export default function App() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
-  const catalogPage = (
-    <>
-      <HeroSection
+  return (
+    <div className="site-shell">
+      <Header theme={theme} setTheme={setTheme} />
+
+      <main>
+        <HeroSection
           search={search}
           setSearch={setSearch}
           visibleCount={visibleProducts.length}
@@ -116,9 +117,9 @@ export default function App() {
           rimOptions={catalogRims}
           activeCategory={activeCategory}
           activeRim={activeRim}
-        setActiveCategory={setActiveCategory}
-        setActiveRim={setActiveRim}
-        products={visibleProducts}
+          setActiveCategory={setActiveCategory}
+          setActiveRim={setActiveRim}
+          products={visibleProducts}
           onSelectProduct={setSelectedProduct}
           onConsultProduct={openWhatsApp}
           formatIDR={formatIDR}
@@ -126,43 +127,13 @@ export default function App() {
           error={productError}
         />
 
-      <ServicesSection services={services} />
-      <PromoSection promos={promos} />
-      <ContactSection onConsult={() => openWhatsApp(null)} />
-    </>
-  );
-
-  return (
-    <div className="site-shell">
-      <Header theme={theme} setTheme={setTheme} />
-
-      <main>
-        <Routes>
-          <Route path="/" element={catalogPage} />
-          <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
-          <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" replace />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminDashboard onProductsChanged={loadProducts} />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ServicesSection services={services} />
+        <PromoSection promos={promos} />
+        <ContactSection onConsult={() => openWhatsApp(null)} />
       </main>
 
       <footer>
-        <p>© {new Date().getFullYear()} Surya Ban. Katalog ban mobil, MPV, SUV, dan niaga.</p>
+        <p>&copy; {new Date().getFullYear()} Surya Ban. Katalog ban mobil, MPV, SUV, dan niaga.</p>
       </footer>
 
       <ProductModal

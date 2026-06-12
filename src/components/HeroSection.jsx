@@ -1,3 +1,5 @@
+"use client";
+
 export default function HeroSection({ search, setSearch, visibleCount, totalCount, onConsult }) {
   const quickSearches = ["185/65 R15", "Avanza", "SUV", "R16"];
   const hasSearch = search.trim().length > 0;

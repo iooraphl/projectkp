@@ -1,7 +1,9 @@
+"use client";
+
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
-import "../styles/auth.css";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -14,7 +16,7 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const { register, error, setError } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +41,7 @@ export default function Register() {
     );
 
     if (result.success) {
-      navigate("/");
+      router.push("/");
     }
 
     setLoading(false);
@@ -152,7 +154,7 @@ export default function Register() {
         </form>
 
         <p className="auth-link">
-          Sudah punya akun? <Link to="/login">Login di sini</Link>
+          Sudah punya akun? <Link href="/login">Login di sini</Link>
         </p>
       </div>
     </div>

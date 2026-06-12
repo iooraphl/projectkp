@@ -1,33 +1,36 @@
-import { Link, useNavigate } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Header({ theme, setTheme }) {
   const { isAdmin, isAuthenticated, logout, user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    router.push("/");
   };
 
   return (
     <header className="nav">
-      <Link className="nav-logo" to="/">
+      <Link className="nav-logo" href="/">
         <span className="logo-mark">SB</span>
         <span>Surya Ban</span>
       </Link>
 
       <nav className="nav-menu" aria-label="Navigasi utama">
-        <Link to="/#katalog">Katalog</Link>
-        <Link to="/#layanan">Layanan</Link>
-        <Link to="/#kontak">Kontak</Link>
-        {isAdmin && <Link to="/admin">Admin</Link>}
+        <Link href="/#katalog">Katalog</Link>
+        <Link href="/#layanan">Layanan</Link>
+        <Link href="/#kontak">Kontak</Link>
+        {isAdmin && <Link href="/admin">Admin</Link>}
       </nav>
 
       <div className="nav-actions">
         {isAuthenticated ? (
           <>
-            <Link className="nav-auth-link" to="/profile">
+            <Link className="nav-auth-link" href="/profile">
               {user?.name || "Profil"}
             </Link>
             <button className="nav-auth-btn" type="button" onClick={handleLogout}>
@@ -36,10 +39,10 @@ export default function Header({ theme, setTheme }) {
           </>
         ) : (
           <>
-            <Link className="nav-auth-link" to="/login">
+            <Link className="nav-auth-link" href="/login">
               Login
             </Link>
-            <Link className="nav-auth-btn" to="/register">
+            <Link className="nav-auth-btn" href="/register">
               Daftar
             </Link>
           </>

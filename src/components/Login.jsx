@@ -1,14 +1,16 @@
+"use client";
+
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
-import "../styles/auth.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, error, setError } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +20,7 @@ export default function Login() {
     const result = await login(email, password);
 
     if (result.success) {
-      navigate("/");
+      router.push("/");
     }
 
     setLoading(false);
@@ -75,7 +77,7 @@ export default function Login() {
         </form>
 
         <p className="auth-link">
-          Belum punya akun? <Link to="/register">Daftar di sini</Link>
+          Belum punya akun? <Link href="/register">Daftar di sini</Link>
         </p>
       </div>
     </div>

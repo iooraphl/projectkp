@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
@@ -9,7 +11,7 @@ const readJson = async (response) => {
 
 const getAuthErrorMessage = (error) => {
   if (error instanceof TypeError) {
-    return "Tidak bisa terhubung ke server auth. Pastikan backend berjalan di http://127.0.0.1:4000.";
+    return "Tidak bisa terhubung ke server auth. Pastikan aplikasi Next.js berjalan.";
   }
 
   return error.message || "Terjadi kesalahan. Silakan coba lagi.";
@@ -21,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:4000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
   // Initialize auth from localStorage
   useEffect(() => {

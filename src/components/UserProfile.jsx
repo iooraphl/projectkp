@@ -1,6 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import "../styles/profile.css";
 
 export default function UserProfile() {
   const { user, updateProfile, changePassword, error, setError } = useAuth();

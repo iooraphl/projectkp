@@ -1,10 +1,11 @@
+"use client";
+
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { categories, rimOptions } from '../constants/storeData';
 import { formatIDR } from '../utils/format';
-import '../styles/admin.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const requiredProductFields = new Set(['name', 'brand', 'category', 'price']);
 
 const emptyForm = {

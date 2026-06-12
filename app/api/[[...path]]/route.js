@@ -86,6 +86,12 @@ const validateProductInput = (data, partial = false) => {
     }
   }
 
+  for (const field of requiredFields) {
+    if (Object.hasOwn(data, field) && (data[field] === "" || data[field] === null || data[field] === undefined)) {
+      return `${field} wajib diisi`;
+    }
+  }
+
   if (Object.hasOwn(data, "price") && (!Number.isFinite(data.price) || data.price <= 0)) {
     return "Harga produk tidak valid";
   }
@@ -357,7 +363,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  const [scope, resource, subresource] = getPathParts(req);
+  const [scope, resource, productId, action] = getPathParts(req);
 
   if (scope === "auth" && resource === "register") {
     try {
@@ -444,7 +450,7 @@ export async function POST(req) {
     }
   }
 
-  if (scope === "admin" && resource === "products") {
+  if (scope === "admin" && resource === "products" && !productId) {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
     const admin = requireAdmin(auth.user);
@@ -481,11 +487,7 @@ export async function POST(req) {
     }
   }
 
-  if (scope === "admin" && resource === "products" && subresource === "image") {
-    return json({ message: "Route tidak ditemukan" }, { status: 404 });
-  }
-
-  if (scope === "admin" && resource && subresource === "image") {
+  if (scope === "admin" && resource === "products" && productId && action === "image") {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
     const admin = requireAdmin(auth.user);
@@ -500,7 +502,7 @@ export async function POST(req) {
       }
 
       const existingProduct = await prisma.product.findUnique({
-        where: { id: resource },
+        where: { id: productId },
         select: { image: true, imagePublicId: true }
       });
 
@@ -508,14 +510,14 @@ export async function POST(req) {
         return json({ message: "Produk tidak ditemukan" }, { status: 404 });
       }
 
-      const safeName = resource.replace(/[^a-zA-Z0-9_-]/g, "-");
+      const safeName = productId.replace(/[^a-zA-Z0-9_-]/g, "-");
       const uploadResult = await uploadImageBuffer(Buffer.from(await image.arrayBuffer()), {
         folder: "surya-ban/products",
         public_id: `${safeName}-${Date.now()}`
       });
 
       const product = await prisma.product.update({
-        where: { id: resource },
+        where: { id: productId },
         data: {
           image: uploadResult.secure_url,
           imagePublicId: uploadResult.public_id
@@ -589,7 +591,7 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-  const [scope, resource, subresource] = getPathParts(req);
+  const [scope, resource, productId, action] = getPathParts(req);
 
   if (scope === "auth" && resource === "profile") {
     const auth = getAuthUser(req);
@@ -664,11 +666,7 @@ export async function PUT(req) {
     }
   }
 
-  if (scope === "admin" && resource === "products") {
-    return json({ message: "Route tidak ditemukan" }, { status: 404 });
-  }
-
-  if (scope === "admin" && resource) {
+  if (scope === "admin" && resource === "products" && productId && action !== "image") {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
     const admin = requireAdmin(auth.user);
@@ -676,7 +674,7 @@ export async function PUT(req) {
 
     try {
       const existingProduct = await prisma.product.findUnique({
-        where: { id: resource },
+        where: { id: productId },
         select: { image: true, imagePublicId: true }
       });
 
@@ -696,7 +694,7 @@ export async function PUT(req) {
       }
 
       const product = await prisma.product.update({
-        where: { id: resource },
+        where: { id: productId },
         data
       });
 
@@ -764,9 +762,9 @@ export async function PATCH(req) {
 }
 
 export async function DELETE(req) {
-  const [scope, resource] = getPathParts(req);
+  const [scope, resource, productId, action] = getPathParts(req);
 
-  if (scope === "admin" && resource) {
+  if (scope === "admin" && resource === "products" && productId && action !== "image") {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
     const admin = requireAdmin(auth.user);
@@ -774,7 +772,7 @@ export async function DELETE(req) {
 
     try {
       const product = await prisma.product.findUnique({
-        where: { id: resource }
+        where: { id: productId }
       });
 
       if (!product) {
@@ -782,11 +780,43 @@ export async function DELETE(req) {
       }
 
       await prisma.product.delete({
-        where: { id: resource }
+        where: { id: productId }
       });
 
       await deleteCloudinaryImage(product.imagePublicId);
       return json({ message: "Produk berhasil dihapus" });
+    } catch (error) {
+      return json({ message: error.message || "Internal server error" }, { status: 500 });
+    }
+  }
+
+  if (scope === "admin" && resource === "products" && productId && action === "image") {
+    const auth = getAuthUser(req);
+    if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
+    const admin = requireAdmin(auth.user);
+    if (admin.error) return json({ message: admin.error.message }, { status: admin.error.status });
+
+    try {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { imagePublicId: true }
+      });
+
+      if (!product) {
+        return json({ message: "Produk tidak ditemukan" }, { status: 404 });
+      }
+
+      await deleteCloudinaryImage(product.imagePublicId);
+
+      const updated = await prisma.product.update({
+        where: { id: productId },
+        data: {
+          image: null,
+          imagePublicId: null
+        }
+      });
+
+      return json(updated);
     } catch (error) {
       return json({ message: error.message || "Internal server error" }, { status: 500 });
     }

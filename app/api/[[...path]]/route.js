@@ -93,6 +93,16 @@ const validateProductInput = (data, partial = false) => {
   return null;
 };
 
+const buildUniqueConstraintMessage = (error, fallback) => {
+  const field = Array.isArray(error?.meta?.target) ? error.meta.target[0] : null;
+
+  if (field === "name") {
+    return "Nama produk sudah digunakan";
+  }
+
+  return fallback;
+};
+
 const buildMethodLabel = (paymentMethod) =>
   paymentMethod === "TRANSFER_BANK" ? "Transfer Manual" : "COD";
 
@@ -448,11 +458,23 @@ export async function POST(req) {
         return json({ message: validationError }, { status: 400 });
       }
 
+      const existingProduct = await prisma.product.findUnique({
+        where: { name: data.name },
+        select: { id: true }
+      });
+
+      if (existingProduct) {
+        return json({ message: `Produk dengan nama "${data.name}" sudah ada` }, { status: 409 });
+      }
+
       const product = await prisma.product.create({ data });
       return json(product, { status: 201 });
     } catch (error) {
       if (error?.code === "P2002") {
-        return json({ message: "Nama produk sudah digunakan" }, { status: 409 });
+        return json(
+          { message: buildUniqueConstraintMessage(error, "Data produk sudah digunakan") },
+          { status: 409 }
+        );
       }
 
       return json({ message: error.message || "Internal server error" }, { status: 500 });
@@ -685,7 +707,10 @@ export async function PUT(req) {
       }
 
       if (error?.code === "P2002") {
-        return json({ message: "Nama produk sudah digunakan" }, { status: 409 });
+        return json(
+          { message: buildUniqueConstraintMessage(error, "Data produk sudah digunakan") },
+          { status: 409 }
+        );
       }
 
       return json({ message: error.message || "Internal server error" }, { status: 500 });

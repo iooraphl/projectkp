@@ -1,15 +1,12 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "../../../lib/prisma.js";
 import { generateToken, getUserFromRequest } from "../../../lib/auth.js";
+import { deleteCloudinaryImage, uploadImageBuffer } from "../../../lib/cloudinary.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const uploadDir = path.join(process.cwd(), "public", "uploads", "products");
 
 const manualBankInfo = {
   bank: process.env.MANUAL_BANK_NAME || "BCA",
@@ -42,8 +39,6 @@ const productFields = [
   "badge",
   "note"
 ];
-
-fs.mkdirSync(uploadDir, { recursive: true });
 
 const json = (data, init = {}) => NextResponse.json(data, init);
 
@@ -98,15 +93,6 @@ const validateProductInput = (data, partial = false) => {
   return null;
 };
 
-const removeUploadedImage = async (image) => {
-  if (!image?.startsWith("/uploads/products/")) return;
-
-  const filePath = path.join(process.cwd(), "public", image);
-  if (!filePath.startsWith(uploadDir)) return;
-
-  await fs.promises.rm(filePath, { force: true });
-};
-
 const buildMethodLabel = (paymentMethod) =>
   paymentMethod === "TRANSFER_BANK" ? "Transfer Manual" : "COD";
 
@@ -132,6 +118,11 @@ const requireAdmin = (user) => {
   }
 
   return { user };
+};
+
+const parseNumericId = (value) => {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
 };
 
 const buildOrderInclude = {
@@ -219,7 +210,11 @@ export async function GET(req) {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
 
-    const userId = Number(resource);
+    const userId = parseNumericId(resource);
+    if (!userId) {
+      return json({ message: "User tidak valid" }, { status: 400 });
+    }
+
     if (auth.user.userId !== userId && auth.user.role !== "ADMIN") {
       return json({ message: "Akses ditolak" }, { status: 403 });
     }
@@ -294,7 +289,11 @@ export async function GET(req) {
     const auth = getAuthUser(req);
     if (auth.error) return json({ message: auth.error.message }, { status: auth.error.status });
 
-    const userId = Number(resource);
+    const userId = parseNumericId(resource);
+    if (!userId) {
+      return json({ message: "User tidak valid" }, { status: 400 });
+    }
+
     if (auth.user.userId !== userId && auth.user.role !== "ADMIN") {
       return json({ message: "Akses ditolak" }, { status: 403 });
     }
@@ -480,25 +479,28 @@ export async function POST(req) {
 
       const existingProduct = await prisma.product.findUnique({
         where: { id: resource },
-        select: { image: true }
+        select: { image: true, imagePublicId: true }
       });
 
       if (!existingProduct) {
         return json({ message: "Produk tidak ditemukan" }, { status: 404 });
       }
 
-      const extension = path.extname(image.name).toLowerCase();
-      const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${extension}`;
-      const buffer = Buffer.from(await image.arrayBuffer());
-      await fs.promises.writeFile(path.join(uploadDir, filename), buffer);
-
-      const nextImage = `/uploads/products/${filename}`;
-      const product = await prisma.product.update({
-        where: { id: resource },
-        data: { image: nextImage }
+      const safeName = resource.replace(/[^a-zA-Z0-9_-]/g, "-");
+      const uploadResult = await uploadImageBuffer(Buffer.from(await image.arrayBuffer()), {
+        folder: "surya-ban/products",
+        public_id: `${safeName}-${Date.now()}`
       });
 
-      await removeUploadedImage(existingProduct.image);
+      const product = await prisma.product.update({
+        where: { id: resource },
+        data: {
+          image: uploadResult.secure_url,
+          imagePublicId: uploadResult.public_id
+        }
+      });
+
+      await deleteCloudinaryImage(existingProduct.imagePublicId);
       return json(product);
     } catch (error) {
       return json({ message: error.message || "Internal server error" }, { status: 500 });
@@ -651,11 +653,24 @@ export async function PUT(req) {
     if (admin.error) return json({ message: admin.error.message }, { status: admin.error.status });
 
     try {
+      const existingProduct = await prisma.product.findUnique({
+        where: { id: resource },
+        select: { image: true, imagePublicId: true }
+      });
+
+      if (!existingProduct) {
+        return json({ message: "Produk tidak ditemukan" }, { status: 404 });
+      }
+
       const data = normalizeProductInput(await readJsonBody(req));
       const validationError = validateProductInput(data, true);
 
       if (validationError) {
         return json({ message: validationError }, { status: 400 });
+      }
+
+      if (Object.hasOwn(data, "image") && data.image !== existingProduct.image) {
+        data.imagePublicId = null;
       }
 
       const product = await prisma.product.update({
@@ -733,17 +748,21 @@ export async function DELETE(req) {
     if (admin.error) return json({ message: admin.error.message }, { status: admin.error.status });
 
     try {
-      const product = await prisma.product.delete({
+      const product = await prisma.product.findUnique({
         where: { id: resource }
       });
 
-      await removeUploadedImage(product.image);
-      return json({ message: "Produk berhasil dihapus" });
-    } catch (error) {
-      if (error?.code === "P2025") {
+      if (!product) {
         return json({ message: "Produk tidak ditemukan" }, { status: 404 });
       }
 
+      await prisma.product.delete({
+        where: { id: resource }
+      });
+
+      await deleteCloudinaryImage(product.imagePublicId);
+      return json({ message: "Produk berhasil dihapus" });
+    } catch (error) {
       return json({ message: error.message || "Internal server error" }, { status: 500 });
     }
   }

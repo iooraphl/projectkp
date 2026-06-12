@@ -62,6 +62,7 @@ model Product {
   yearProduction String?
   warranty      String?
   image         String?
+  imagePublicId String?
   stock         String    @default("Ready")
   badge         String?
   note          String?

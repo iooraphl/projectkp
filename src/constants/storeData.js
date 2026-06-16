@@ -1,4 +1,4 @@
-export const whatsappNumber = "628990851133";
+export const whatsappNumber = "6285743437506";
 
 export const categories = ["Semua", "City Car", "MPV", "SUV", "Commercial"];
 export const rimOptions = ["Semua Ring", "R13", "R14", "R15", "R16", "R17", "R18"];

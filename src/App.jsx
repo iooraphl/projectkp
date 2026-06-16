@@ -6,7 +6,8 @@ import HeroSection from "./components/HeroSection";
 import { ContactSection, PromoSection, ServicesSection } from "./components/MarketingSections";
 import ProductModal from "./components/ProductModal";
 import ProductSection from "./components/ProductSection";
-import { categories, promos, rimOptions, services, whatsappNumber } from "./constants/storeData";
+import { categories, promos, rimOptions, services } from "./constants/storeData";
+import { createWhatsAppLink } from "./utils/whatsapp";
 import { formatIDR } from "./utils/format";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -92,11 +93,8 @@ export default function App() {
     });
   }, [activeCategory, activeRim, products, search]);
 
-  const openWhatsApp = (product) => {
-    const message = product
-      ? `Halo Surya Ban, saya mau tanya ${product.name} ukuran ${product.size}. Cocok untuk mobil saya?`
-      : "Halo Surya Ban, saya mau konsultasi pilihan ban mobil.";
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  const openWhatsApp = ({ product = null, intent = "consult" } = {}) => {
+    window.open(createWhatsAppLink({ product, intent }), "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -109,7 +107,7 @@ export default function App() {
           setSearch={setSearch}
           visibleCount={visibleProducts.length}
           totalCount={products.length}
-          onConsult={() => openWhatsApp(null)}
+          onConsult={() => openWhatsApp({ intent: "consult" })}
         />
 
         <ProductSection
@@ -121,7 +119,7 @@ export default function App() {
           setActiveRim={setActiveRim}
           products={visibleProducts}
           onSelectProduct={setSelectedProduct}
-          onConsultProduct={openWhatsApp}
+          onConsultProduct={(product, intent) => openWhatsApp({ product, intent })}
           formatIDR={formatIDR}
           loading={productLoading}
           error={productError}
@@ -129,7 +127,7 @@ export default function App() {
 
         <ServicesSection services={services} />
         <PromoSection promos={promos} />
-        <ContactSection onConsult={() => openWhatsApp(null)} />
+        <ContactSection onConsult={() => openWhatsApp({ intent: "consult" })} />
       </main>
 
       <footer>
@@ -139,7 +137,7 @@ export default function App() {
       <ProductModal
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
-        onConsultProduct={openWhatsApp}
+        onConsultProduct={(product, intent) => openWhatsApp({ product, intent })}
         formatIDR={formatIDR}
       />
     </div>

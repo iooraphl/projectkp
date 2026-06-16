@@ -32,6 +32,9 @@ export default function ProductModal({ product, onClose, onConsultProduct, forma
             <span className="card-badge modal-badge">{product.badge}</span>
             <h2>{product.name}</h2>
             <p className="modal-subtitle">{product.character}</p>
+            <p className="stock-line modal-stock-line">
+              Stok: <strong>{product.stock}</strong>
+            </p>
             <p className="modal-price">{formatIDR(product.price)} <small>/ pcs</small></p>
 
             <div className="spec-columns">
@@ -59,8 +62,12 @@ export default function ProductModal({ product, onClose, onConsultProduct, forma
               <b>Catatan:</b> {product.note}
             </div>
 
-            <button className="btn btn-primary full" type="button" onClick={() => onConsultProduct(product)}>
-              Tanya Kecocokan Ban Ini
+            <button
+              className="btn btn-primary full"
+              type="button"
+              onClick={() => onConsultProduct(product, "checkout")}
+            >
+              Checkout via WhatsApp
             </button>
           </div>
         </div>

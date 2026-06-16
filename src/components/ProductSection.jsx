@@ -75,18 +75,24 @@ export default function ProductSection({
                 <span className="product-cat">{product.category}</span>
                 <h3>{product.name}</h3>
                 <p className="product-size">{product.size}</p>
+                <p className="stock-line">
+                  Stok: <strong>{product.stock}</strong>
+                </p>
                 <p className="price">{formatIDR(product.price)} <small>/ pcs</small></p>
                 <div className="spec-pills">
                   <span>{product.rim}</span>
                   <span>{product.vehicleType}</span>
-                  <span>{product.stock}</span>
                 </div>
               </div>
               <div className="product-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => onSelectProduct(product)}>
                   Detail
                 </button>
-                <button type="button" className="btn btn-primary" onClick={() => onConsultProduct(product)}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onConsultProduct(product, "consult")}
+                >
                   Tanya Ban
                 </button>
               </div>
